@@ -1,29 +1,17 @@
 # =========================================
 # FILE: backend/forecasting.py
+# DEPLOYMENT-OPTIMIZED VERSION
 # =========================================
 
 import pandas as pd
 import numpy as np
 
 from statsmodels.tsa.statespace.sarimax import SARIMAX
-from prophet import Prophet
-
 
 # =========================================
 # PREPARE PROGRAM DATA
 # =========================================
 def prepare_program_data(df):
-
-    # Remove empty rows
-    df = df.dropna(
-        subset=[
-            "Department",
-            "Program",
-            "Semester",
-            "Year",
-            "Total Enrollments"
-        ]
-    )
 
     programs = {}
 
@@ -39,62 +27,35 @@ def prepare_program_data(df):
             row["Year"]
         ).strip()
 
-        # Convert semester to real month
+        # Convert semester to month
         month = (
             "01"
             if semester == "1"
             else "06"
         )
 
-        # Final datetime
-        date = f"{year}-{month}-01"
-
-        # Department
-        department = str(
-            row["Department"]
-        ).strip()
+        # Create date
+        date = (
+            f"{year}-{month}-01"
+        )
 
         # Program
         program = str(
             row["Program"]
         ).strip()
 
-        # Enrollment validation
-        enrollment_raw = row[
-            "Total Enrollments"
-        ]
+        # Enrollment
+        enrollment = float(
+            row["Total Enrollments"]
+        )
 
-        if pd.isna(enrollment_raw):
-
-            continue
-
-        try:
-
-            enrollment = float(
-                enrollment_raw
-            )
-
-        except:
-
-            continue
-
-        if np.isnan(enrollment):
-
-            continue
-
-        # Create program bucket
+        # Initialize program
         if program not in programs:
 
-            programs[program] = {
+            programs[program] = []
 
-                "department": department,
-
-                "data": []
-
-            }
-
-        # Append row
-        programs[program]["data"].append({
+        # Append record
+        programs[program].append({
 
             "ds": date,
 
@@ -112,9 +73,12 @@ def run_sarima(series):
 
     try:
 
-        values = [x["y"] for x in series]
+        values = [
+            x["y"]
+            for x in series
+        ]
 
-        # Need enough observations
+        # Small dataset protection
         if len(values) < 4:
 
             return []
@@ -125,7 +89,16 @@ def run_sarima(series):
 
             order=(1, 1, 1),
 
-            seasonal_order=(1, 1, 1, 2)
+            seasonal_order=(
+                1,
+                1,
+                1,
+                2
+            ),
+
+            enforce_stationarity=False,
+
+            enforce_invertibility=False,
 
         )
 
@@ -156,75 +129,6 @@ def run_sarima(series):
 
 
 # =========================================
-# RUN PROPHET
-# =========================================
-def run_prophet(series):
-
-    try:
-
-        prophet_df = pd.DataFrame(series)
-
-        prophet_df["ds"] = pd.to_datetime(
-
-            prophet_df["ds"],
-
-            format="%Y-%m-%d",
-
-            errors="coerce"
-
-        )
-
-        prophet_df = prophet_df.dropna()
-
-        if len(prophet_df) < 4:
-
-            return []
-
-        model = Prophet()
-
-        model.fit(prophet_df)
-
-        future = model.make_future_dataframe(
-
-            periods=6,
-
-            freq="6ME"
-
-        )
-
-        forecast = model.predict(
-            future
-        )
-
-        predictions = (
-
-            forecast["yhat"]
-
-            .tail(6)
-
-            .tolist()
-
-        )
-
-        return [
-
-            round(float(x), 2)
-
-            for x in predictions
-
-        ]
-
-    except Exception as e:
-
-        print(
-            "PROPHET ERROR:",
-            e
-        )
-
-        return []
-
-
-# =========================================
 # METRICS
 # =========================================
 def calculate_metrics(
@@ -233,11 +137,9 @@ def calculate_metrics(
 ):
 
     if (
-
         len(actual) == 0
         or
         len(predicted) == 0
-
     ):
 
         return {
@@ -252,12 +154,10 @@ def calculate_metrics(
 
         }
 
+    # Safe matching
     min_len = min(
-
         len(actual),
-
         len(predicted)
-
     )
 
     actual = np.array(
@@ -269,11 +169,15 @@ def calculate_metrics(
     )
 
     mae = np.mean(
-        np.abs(actual - predicted)
+        np.abs(
+            actual - predicted
+        )
     )
 
     mse = np.mean(
-        (actual - predicted) ** 2
+        (
+            actual - predicted
+        ) ** 2
     )
 
     rmse = np.sqrt(mse)
@@ -282,9 +186,9 @@ def calculate_metrics(
 
         np.abs(
 
-            (actual - predicted)
-
-            /
+            (
+                actual - predicted
+            ) /
 
             np.where(
                 actual == 0,
@@ -332,16 +236,12 @@ def generate_forecasts(df):
 
     results = []
 
-    for program_name, program_info in programs.items():
+    for (
+        program_name,
+        series
+    ) in programs.items():
 
-        department_name = program_info[
-            "department"
-        ]
-
-        series = program_info[
-            "data"
-        ]
-
+        # Historical values
         actual = [
 
             x["y"]
@@ -350,54 +250,74 @@ def generate_forecasts(df):
 
         ]
 
-        # SARIMA
+        # =================================
+        # SARIMA ONLY
+        # =================================
         sarima_forecast = run_sarima(
             series
         )
 
-        # PROPHET
-        prophet_forecast = run_prophet(
-            series
+        # =================================
+        # PROPHET DISABLED
+        # =================================
+        prophet_forecast = []
+
+        # =================================
+        # SARIMA METRICS
+        # =================================
+        sarima_metrics = (
+            calculate_metrics(
+
+                actual,
+
+                sarima_forecast
+
+            )
         )
 
-        # Metrics
-        sarima_metrics = calculate_metrics(
+        # =================================
+        # PROPHET METRICS
+        # =================================
+        prophet_metrics = {
 
-            actual,
+            "rmse": 0,
 
-            sarima_forecast
+            "mae": 0,
 
-        )
+            "mse": 0,
 
-        prophet_metrics = calculate_metrics(
+            "mape": 0,
 
-            actual,
+        }
 
-            prophet_forecast
-
-        )
-
+        # =================================
+        # RESULT
+        # =================================
         results.append({
 
-            "department": department_name,
+            "program":
+                program_name,
 
-            "program": program_name,
-
-            "historical": series,
+            "historical":
+                series,
 
             "forecast": {
 
-                "sarima": sarima_forecast,
+                "sarima":
+                    sarima_forecast,
 
-                "prophet": prophet_forecast,
+                "prophet":
+                    prophet_forecast,
 
             },
 
             "metrics": {
 
-                "sarima": sarima_metrics,
+                "sarima":
+                    sarima_metrics,
 
-                "prophet": prophet_metrics,
+                "prophet":
+                    prophet_metrics,
 
             }
 
