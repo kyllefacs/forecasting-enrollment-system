@@ -1,12 +1,9 @@
-# =========================================
-# FILE: backend/forecasting.py
-# DEPLOYMENT-OPTIMIZED VERSION
-# =========================================
-
 import pandas as pd
 import numpy as np
 
 from statsmodels.tsa.statespace.sarimax import SARIMAX
+
+from prophet import Prophet
 
 # =========================================
 # PREPARE PROGRAM DATA
@@ -34,7 +31,7 @@ def prepare_program_data(df):
             else "06"
         )
 
-        # Create date
+        # Date
         date = (
             f"{year}-{month}-01"
         )
@@ -49,12 +46,12 @@ def prepare_program_data(df):
             row["Total Enrollments"]
         )
 
-        # Initialize program
+        # Create program bucket
         if program not in programs:
 
             programs[program] = []
 
-        # Append record
+        # Append data
         programs[program].append({
 
             "ds": date,
@@ -74,11 +71,14 @@ def run_sarima(series):
     try:
 
         values = [
+
             x["y"]
+
             for x in series
+
         ]
 
-        # Small dataset protection
+        # Protect small datasets
         if len(values) < 4:
 
             return []
@@ -129,6 +129,80 @@ def run_sarima(series):
 
 
 # =========================================
+# RUN PROPHET
+# =========================================
+def run_prophet(series):
+
+    try:
+
+        prophet_df = pd.DataFrame(
+            series
+        )
+
+        # Convert dates
+        prophet_df["ds"] = pd.to_datetime(
+
+            prophet_df["ds"],
+
+            errors="coerce"
+
+        )
+
+        # Remove invalid dates
+        prophet_df = prophet_df.dropna()
+
+        # Protect tiny datasets
+        if len(prophet_df) < 4:
+
+            return []
+
+        model = Prophet()
+
+        model.fit(
+            prophet_df
+        )
+
+        future = model.make_future_dataframe(
+
+            periods=6,
+
+            freq="6ME"
+
+        )
+
+        forecast = model.predict(
+            future
+        )
+
+        predictions = (
+
+            forecast["yhat"]
+
+            .tail(6)
+
+            .tolist()
+
+        )
+
+        return [
+
+            round(float(x), 2)
+
+            for x in predictions
+
+        ]
+
+    except Exception as e:
+
+        print(
+            "PROPHET ERROR:",
+            e
+        )
+
+        return []
+
+
+# =========================================
 # METRICS
 # =========================================
 def calculate_metrics(
@@ -154,7 +228,7 @@ def calculate_metrics(
 
         }
 
-    # Safe matching
+    # Match safely
     min_len = min(
         len(actual),
         len(predicted)
@@ -169,15 +243,19 @@ def calculate_metrics(
     )
 
     mae = np.mean(
+
         np.abs(
             actual - predicted
         )
+
     )
 
     mse = np.mean(
+
         (
             actual - predicted
         ) ** 2
+
     )
 
     rmse = np.sqrt(mse)
@@ -241,7 +319,7 @@ def generate_forecasts(df):
         series
     ) in programs.items():
 
-        # Historical values
+        # Historical
         actual = [
 
             x["y"]
@@ -251,16 +329,18 @@ def generate_forecasts(df):
         ]
 
         # =================================
-        # SARIMA ONLY
+        # SARIMA FORECAST
         # =================================
         sarima_forecast = run_sarima(
             series
         )
 
         # =================================
-        # PROPHET DISABLED
+        # PROPHET FORECAST
         # =================================
-        prophet_forecast = []
+        prophet_forecast = run_prophet(
+            series
+        )
 
         # =================================
         # SARIMA METRICS
@@ -278,20 +358,18 @@ def generate_forecasts(df):
         # =================================
         # PROPHET METRICS
         # =================================
-        prophet_metrics = {
+        prophet_metrics = (
+            calculate_metrics(
 
-            "rmse": 0,
+                actual,
 
-            "mae": 0,
+                prophet_forecast
 
-            "mse": 0,
-
-            "mape": 0,
-
-        }
+            )
+        )
 
         # =================================
-        # RESULT
+        # STORE RESULTS
         # =================================
         results.append({
 
