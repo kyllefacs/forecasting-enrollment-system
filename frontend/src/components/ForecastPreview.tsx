@@ -1,5 +1,18 @@
 "use client";
 
+import {
+
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+
+} from "recharts";
+
 type Props = {
   result?: any;
 };
@@ -8,13 +21,17 @@ export default function ForecastPreview({
   result,
 }: Props) {
 
+  // =====================================
+  // EMPTY STATE
+  // =====================================
+
   if (!result) {
 
     return (
 
-      <div className="flex items-center justify-center h-[300px] text-gray-400">
+      <div className="flex items-center justify-center h-[400px] text-gray-400">
 
-        Upload dataset to generate forecast
+        Upload dataset to generate chart
 
       </div>
 
@@ -22,47 +39,129 @@ export default function ForecastPreview({
 
   }
 
-  const sarima =
-    result?.forecast?.sarima?.[0] ?? 0;
+  // =====================================
+  // HISTORICAL DATA
+  // =====================================
 
-  const prophet =
-    result?.forecast?.prophet?.[0] ?? 0;
+  const historical =
+    result?.historical || [];
+
+  const sarimaForecast =
+    result?.forecast
+      ?.sarima || [];
+
+  const prophetForecast =
+    result?.forecast
+      ?.prophet || [];
+
+  // =====================================
+  // BUILD CHART
+  // =====================================
+
+  const historicalData =
+    historical.map(
+      (
+        value: number,
+        index: number
+      ) => ({
+
+        name:
+          `H${index + 1}`,
+
+        Historical:
+          value,
+
+        SARIMA:
+          null,
+
+        Prophet:
+          null,
+
+      })
+    );
+
+  const forecastData =
+    sarimaForecast.map(
+      (
+        value: number,
+        index: number
+      ) => ({
+
+        name:
+          `F${index + 1}`,
+
+        Historical:
+          null,
+
+        SARIMA:
+          value,
+
+        Prophet:
+          prophetForecast[
+            index
+          ] ?? null,
+
+      })
+    );
+
+  const chartData = [
+
+    ...historicalData,
+    ...forecastData,
+
+  ];
 
   return (
 
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="w-full h-[500px]">
 
-      <div className="bg-blue-50 rounded-2xl p-6">
+      <ResponsiveContainer
+        width="100%"
+        height="100%"
+      >
 
-        <h3 className="text-lg font-semibold text-gray-700">
+        <LineChart
+          data={chartData}
+        >
 
-          SARIMA Forecast
+          <CartesianGrid
+            strokeDasharray="3 3"
+          />
 
-        </h3>
+          <XAxis dataKey="name" />
 
-        <p className="text-4xl font-black text-blue-600 mt-4">
+          <YAxis />
 
-          {sarima}
+          <Tooltip />
 
-        </p>
+          <Legend />
 
-      </div>
+          <Line
+            type="monotone"
+            dataKey="Historical"
+            stroke="#2563eb"
+            strokeWidth={3}
+          />
 
-      <div className="bg-orange-50 rounded-2xl p-6">
+          <Line
+            type="monotone"
+            dataKey="SARIMA"
+            stroke="#16a34a"
+            strokeWidth={3}
+            strokeDasharray="5 5"
+          />
 
-        <h3 className="text-lg font-semibold text-gray-700">
+          <Line
+            type="monotone"
+            dataKey="Prophet"
+            stroke="#ea580c"
+            strokeWidth={3}
+            strokeDasharray="5 5"
+          />
 
-          Prophet Forecast
+        </LineChart>
 
-        </h3>
-
-        <p className="text-4xl font-black text-orange-600 mt-4">
-
-          {prophet}
-
-        </p>
-
-      </div>
+      </ResponsiveContainer>
 
     </div>
 

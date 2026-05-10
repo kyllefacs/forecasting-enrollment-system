@@ -1,5 +1,18 @@
 "use client";
 
+import {
+
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+
+} from "recharts";
+
 type Props = {
   results?: any[];
 };
@@ -8,11 +21,15 @@ export default function OverallEnrollmentChart({
   results = [],
 }: Props) {
 
+  // =====================================
+  // EMPTY STATE
+  // =====================================
+
   if (results.length === 0) {
 
     return (
 
-      <div className="flex items-center justify-center h-[300px] text-gray-400">
+      <div className="flex items-center justify-center h-[500px] text-gray-400">
 
         No enrollment data available
 
@@ -22,75 +39,201 @@ export default function OverallEnrollmentChart({
 
   }
 
-  const totalSarima =
-    results.reduce(
-      (
-        sum,
-        item
-      ) =>
+  // =====================================
+  // BUILD OVERALL DATA
+  // =====================================
 
-        sum +
+  const historicalTotals:
+    number[] = [];
 
+  const sarimaTotals:
+    number[] = [];
+
+  const prophetTotals:
+    number[] = [];
+
+  results.forEach(
+    (item) => {
+
+      const historical =
+        item?.historical || [];
+
+      historical.forEach(
         (
-          item?.forecast
-            ?.sarima?.[0] ?? 0
-        ),
+          value: number,
+          index: number
+        ) => {
 
-      0
+          historicalTotals[
+            index
+          ] =
+
+            (
+              historicalTotals[
+                index
+              ] || 0
+            ) + value;
+
+        }
+      );
+
+      const sarima =
+        item?.forecast
+          ?.sarima || [];
+
+      sarima.forEach(
+        (
+          value: number,
+          index: number
+        ) => {
+
+          sarimaTotals[
+            index
+          ] =
+
+            (
+              sarimaTotals[
+                index
+              ] || 0
+            ) + value;
+
+        }
+      );
+
+      const prophet =
+        item?.forecast
+          ?.prophet || [];
+
+      prophet.forEach(
+        (
+          value: number,
+          index: number
+        ) => {
+
+          prophetTotals[
+            index
+          ] =
+
+            (
+              prophetTotals[
+                index
+              ] || 0
+            ) + value;
+
+        }
+      );
+
+    }
+  );
+
+  // =====================================
+  // CREATE CHART DATA
+  // =====================================
+
+  const historicalData =
+    historicalTotals.map(
+      (
+        value,
+        index
+      ) => ({
+
+        name:
+          `H${index + 1}`,
+
+        Historical:
+          value,
+
+        SARIMA:
+          null,
+
+        Prophet:
+          null,
+
+      })
     );
 
-  const totalProphet =
-    results.reduce(
+  const forecastData =
+    sarimaTotals.map(
       (
-        sum,
-        item
-      ) =>
+        value,
+        index
+      ) => ({
 
-        sum +
+        name:
+          `F${index + 1}`,
 
-        (
-          item?.forecast
-            ?.prophet?.[0] ?? 0
-        ),
+        Historical:
+          null,
 
-      0
+        SARIMA:
+          value,
+
+        Prophet:
+          prophetTotals[
+            index
+          ] ?? null,
+
+      })
     );
+
+  const chartData = [
+
+    ...historicalData,
+    ...forecastData,
+
+  ];
 
   return (
 
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="w-full h-[500px]">
 
-      <div className="bg-green-50 rounded-2xl p-6">
+      <ResponsiveContainer
+        width="100%"
+        height="100%"
+      >
 
-        <h3 className="text-lg font-semibold text-gray-700">
+        <LineChart
+          data={chartData}
+        >
 
-          Total SARIMA Forecast
+          <CartesianGrid
+            strokeDasharray="3 3"
+          />
 
-        </h3>
+          <XAxis dataKey="name" />
 
-        <p className="text-4xl font-black text-green-600 mt-4">
+          <YAxis />
 
-          {totalSarima}
+          <Tooltip />
 
-        </p>
+          <Legend />
 
-      </div>
+          <Line
+            type="monotone"
+            dataKey="Historical"
+            stroke="#2563eb"
+            strokeWidth={3}
+          />
 
-      <div className="bg-purple-50 rounded-2xl p-6">
+          <Line
+            type="monotone"
+            dataKey="SARIMA"
+            stroke="#16a34a"
+            strokeWidth={3}
+            strokeDasharray="5 5"
+          />
 
-        <h3 className="text-lg font-semibold text-gray-700">
+          <Line
+            type="monotone"
+            dataKey="Prophet"
+            stroke="#ea580c"
+            strokeWidth={3}
+            strokeDasharray="5 5"
+          />
 
-          Total Prophet Forecast
+        </LineChart>
 
-        </h3>
-
-        <p className="text-4xl font-black text-purple-600 mt-4">
-
-          {totalProphet}
-
-        </p>
-
-      </div>
+      </ResponsiveContainer>
 
     </div>
 
