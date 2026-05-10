@@ -1,59 +1,29 @@
-// =========================================
-// FILE: src/app/page.tsx
-// FULLY FIXED VERSION
-// DEPARTMENT DROPDOWN RESTORED
-// =========================================
-
 "use client";
 
-import Footer from "@/components/Footer";
-
-import OverallErrorMetricsChart
-from "@/components/OverallErrorMetricsChart";
-
-import OverallEnrollmentChart
-from "@/components/OverallEnrollmentChart";
-
-import {
-  useMemo,
-  useState,
-} from "react";
-
+import { useEffect, useMemo, useState } from "react";
 import * as XLSX from "xlsx";
 
-import {
-  uploadDataset
-} from "@/utils/api";
-
+import Footer from "@/components/Footer";
 import Card from "@/components/Card";
+import UploadBox from "@/components/UploadBox";
+import ExportButtons from "@/components/ExportButtons";
 
-import UploadBox
-from "@/components/UploadBox";
+import ForecastTrendChart from "@/components/ForecastTrendChart";
+import ErrorComparisonChart from "@/components/ErrorComparisonChart";
+import ProgramForecastChart from "@/components/ProgramForecastChart";
+import OverallEnrollmentChart from "@/components/OverallEnrollmentChart";
+import OverallErrorMetricsChart from "@/components/OverallErrorMetricsChart";
+import ValidationPanel from "@/components/ValidationPanel";
 
-import ExportButtons
-from "@/components/ExportButtons";
-
-import ForecastTrendChart
-from "@/components/ForecastTrendChart";
-
-import ErrorComparisonChart
-from "@/components/ErrorComparisonChart";
-
-import ProgramForecastChart
-from "@/components/ProgramForecastChart";
-
-import ValidationPanel
-from "@/components/ValidationPanel";
-
-import {
-  validateDataset,
-} from "@/utils/validateDataset";
+import { uploadDataset } from "@/utils/api";
+import { validateDataset } from "@/utils/validateDataset";
 
 export default function Home() {
 
   // =====================================
   // STATES
   // =====================================
+
   const [file, setFile] =
     useState<File | null>(null);
 
@@ -78,19 +48,10 @@ export default function Home() {
     setSelectedProgram
   ] = useState("");
 
-  const [
-    forecastHorizon,
-    setForecastHorizon
-  ] = useState(6);
-
-  const [
-    modelView,
-    setModelView
-  ] = useState("compare");
-
   // =====================================
   // VALIDATION
   // =====================================
+
   const validation = useMemo(
     () =>
       validateDataset(
@@ -100,46 +61,134 @@ export default function Home() {
   );
 
   // =====================================
-  // DEPARTMENTS
+  // DEPARTMENT OPTIONS
   // =====================================
-  const departments = [
 
-    ...new Set(
+  const departmentOptions =
+    useMemo(() => {
 
-      excelData.map(
-        (row: any) =>
+      if (!excelData.length) {
+        return [];
+      }
 
-          String(
-            row["Department"]
-          ).trim()
+      return [
 
-      )
+        ...new Set(
 
-    ),
+          excelData.map(
+            (row: any) =>
 
-  ];
+              String(
+                row["Department"]
+              ).trim()
+
+          )
+
+        ),
+
+      ];
+
+    }, [excelData]);
 
   // =====================================
-  // FILTERED PROGRAMS
+  // PROGRAM OPTIONS
   // =====================================
-  const filteredPrograms =
 
-    excelData.filter(
-      (row: any) =>
+  const programOptions =
+    useMemo(() => {
 
-        String(
-          row["Department"]
-        ).trim()
+      if (
+        !excelData.length ||
+        !selectedDepartment
+      ) {
 
-        ===
+        return [];
 
-        selectedDepartment
+      }
 
-    );
+      return [
+
+        ...new Set(
+
+          excelData
+
+            .filter(
+              (row: any) =>
+
+                String(
+                  row["Department"]
+                ).trim()
+
+                ===
+
+                selectedDepartment
+
+            )
+
+            .map(
+              (row: any) =>
+
+                String(
+                  row["Program"]
+                ).trim()
+
+            )
+
+        ),
+
+      ];
+
+    }, [
+      excelData,
+      selectedDepartment
+    ]);
+
+  // =====================================
+  // AUTO SELECT DEPARTMENT
+  // =====================================
+
+  useEffect(() => {
+
+    if (
+      departmentOptions.length > 0 &&
+      !selectedDepartment
+    ) {
+
+      setSelectedDepartment(
+        departmentOptions[0]
+      );
+
+    }
+
+  }, [
+    departmentOptions,
+    selectedDepartment
+  ]);
+
+  // =====================================
+  // AUTO SELECT PROGRAM
+  // =====================================
+
+  useEffect(() => {
+
+    if (
+      programOptions.length > 0
+    ) {
+
+      setSelectedProgram(
+        programOptions[0]
+      );
+
+    }
+
+  }, [
+    selectedDepartment
+  ]);
 
   // =====================================
   // SELECTED PROGRAM DATA
   // =====================================
+
   const selectedProgramData =
     forecastResults.find(
       (item) =>
@@ -148,30 +197,9 @@ export default function Home() {
     );
 
   // =====================================
-  // ACTIVE FORECAST
-  // =====================================
-  const activeForecast =
-    selectedProgramData
-
-      ? modelView === "prophet"
-
-        ? selectedProgramData
-            .forecast
-            .prophet[
-              forecastHorizon - 1
-            ]
-
-        : selectedProgramData
-            .forecast
-            .sarima[
-              forecastHorizon - 1
-            ]
-
-      : 0;
-
-  // =====================================
   // BEST MODEL
   // =====================================
+
   const bestModel =
     selectedProgramData
       ? (
@@ -187,178 +215,37 @@ export default function Home() {
         )
         ? "SARIMA"
         : "Prophet"
-      : "";
-
-  // =====================================
-  // TREND ANALYSIS
-  // =====================================
-  const trendAnalysis = (() => {
-
-    if (
-      !selectedProgramData
-    ) {
-
-      return {
-
-        trend: "No Data",
-
-        growthRate: 0,
-
-        risk: "Unknown",
-
-        recommendation: "",
-
-      };
-
-    }
-
-    const historical =
-      selectedProgramData
-        .historical;
-
-    if (
-      historical.length < 2
-    ) {
-
-      return {
-
-        trend:
-          "Insufficient Data",
-
-        growthRate: 0,
-
-        risk: "Unknown",
-
-        recommendation: "",
-
-      };
-
-    }
-
-    const first =
-      historical[0].y;
-
-    const last =
-      historical[
-        historical.length - 1
-      ].y;
-
-    const growthRate =
-      (
-        (
-          (last - first)
-          / first
-        ) * 100
-      );
-
-    let trend =
-      "Stable";
-
-    if (
-      growthRate > 10
-    ) {
-
-      trend =
-        "Increasing";
-
-    }
-
-    else if (
-      growthRate < -10
-    ) {
-
-      trend =
-        "Declining";
-
-    }
-
-    let risk = "Low";
-
-    if (
-      activeForecast > 300
-    ) {
-
-      risk = "High";
-
-    }
-
-    else if (
-      activeForecast > 150
-    ) {
-
-      risk =
-        "Moderate";
-
-    }
-
-    let recommendation =
-      "Current resource allocation appears sufficient.";
-
-    if (
-      risk === "High"
-    ) {
-
-      recommendation =
-        "Recommend opening additional sections and increasing faculty allocation.";
-
-    }
-
-    else if (
-      risk === "Moderate"
-    ) {
-
-      recommendation =
-        "Monitor enrollment demand and prepare contingency classroom allocation.";
-
-    }
-
-    return {
-
-      trend,
-
-      growthRate:
-        growthRate.toFixed(2),
-
-      risk,
-
-      recommendation,
-
-    };
-
-  })();
+      : "N/A";
 
   // =====================================
   // SMART INSIGHT
   // =====================================
+
   const smartInsight =
     selectedProgramData
 
       ? `
-Trend Analysis:
-${trendAnalysis.trend}
+Selected Program:
+${selectedProgram}
 
-Projected Growth:
-${trendAnalysis.growthRate}%
+Recommended Model:
+${bestModel}
 
-Risk Level:
-${trendAnalysis.risk}
+SARIMA RMSE:
+${selectedProgramData.metrics.sarima.rmse}
 
-Recommendation:
-${trendAnalysis.recommendation}
+Prophet RMSE:
+${selectedProgramData.metrics.prophet.rmse}
 
-${bestModel} achieved better forecasting accuracy.
+The lower RMSE indicates better forecasting performance.
 `
 
-      : "";
-
-  // =====================================
-  // MAX STUDENTS
-  // =====================================
-  const MAX_STUDENTS_PER_SECTION = 50;
+      : "No forecast available.";
 
   // =====================================
   // FILE UPLOAD
   // =====================================
+
   const handleFileUpload =
     async (
       uploadedFile:
@@ -432,29 +319,11 @@ ${bestModel} achieved better forecasting accuracy.
             response.results
           );
 
-          if (
-            response.results
-              .length > 0
-          ) {
+        } else {
 
-            setSelectedDepartment(
-
-              String(
-                jsonData[0][
-                  "Department"
-                ]
-              ).trim()
-
-            );
-
-            setSelectedProgram(
-
-              response.results[0]
-                .program
-
-            );
-
-          }
+          alert(
+            "Forecast generation failed."
+          );
 
         }
 
@@ -561,7 +430,7 @@ ${bestModel} achieved better forecasting accuracy.
         {/* FILTERS */}
         {forecastResults.length > 0 && (
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
             {/* DEPARTMENT */}
             <Card title="🏢 Department">
@@ -572,70 +441,35 @@ ${bestModel} achieved better forecasting accuracy.
                   selectedDepartment
                 }
 
-                onChange={(e) => {
-
-                  const dept =
-                    e.target.value;
-
+                onChange={(e) =>
                   setSelectedDepartment(
-                    dept
-                  );
-
-                  const firstProgram =
-                    excelData.find(
-                      (
-                        row: any
-                      ) =>
-
-                        String(
-                          row["Department"]
-                        ).trim()
-
-                        ===
-
-                        dept
-
-                    );
-
-                  if (
-                    firstProgram
-                  ) {
-
-                    setSelectedProgram(
-
-                      String(
-                        firstProgram[
-                          "Program"
-                        ]
-                      ).trim()
-
-                    );
-
-                  }
-
-                }}
+                    e.target.value
+                  )
+                }
 
                 className="w-full p-4 rounded-2xl border border-gray-300 bg-white shadow-sm text-gray-700"
 
               >
 
-                {departments.map(
-                  (
-                    dept,
-                    index
-                  ) => (
+                {
+                  departmentOptions.map(
+                    (
+                      department,
+                      index
+                    ) => (
 
-                    <option
-                      key={index}
-                      value={dept}
-                    >
+                      <option
+                        key={index}
+                        value={department}
+                      >
 
-                      {dept}
+                        {department}
 
-                    </option>
+                      </option>
 
+                    )
                   )
-                )}
+                }
 
               </select>
 
@@ -661,21 +495,7 @@ ${bestModel} achieved better forecasting accuracy.
               >
 
                 {
-
-                  [...new Set(
-
-                    filteredPrograms.map(
-                      (
-                        row: any
-                      ) =>
-
-                        String(
-                          row["Program"]
-                        ).trim()
-
-                    )
-
-                  )].map(
+                  programOptions.map(
                     (
                       program,
                       index
@@ -692,78 +512,7 @@ ${bestModel} achieved better forecasting accuracy.
 
                     )
                   )
-
                 }
-
-              </select>
-
-            </Card>
-
-            {/* HORIZON */}
-            <Card title="⏳ Forecast Horizon">
-
-              <select
-
-                value={
-                  forecastHorizon
-                }
-
-                onChange={(e) =>
-                  setForecastHorizon(
-                    Number(
-                      e.target.value
-                    )
-                  )
-                }
-
-                className="w-full p-4 rounded-2xl border border-gray-300 bg-white shadow-sm text-gray-700"
-
-              >
-
-                <option value={1}>
-                  1 Semester
-                </option>
-
-                <option value={3}>
-                  3 Semesters
-                </option>
-
-                <option value={6}>
-                  6 Semesters
-                </option>
-
-              </select>
-
-            </Card>
-
-            {/* MODEL */}
-            <Card title="🧠 Model View">
-
-              <select
-
-                value={modelView}
-
-                onChange={(e) =>
-                  setModelView(
-                    e.target.value
-                  )
-                }
-
-                className="w-full p-4 rounded-2xl border border-gray-300 bg-white shadow-sm text-gray-700"
-
-              >
-
-                <option value="sarima">
-                  SARIMA
-                </option>
-
-                <option value="prophet">
-                  Prophet
-                </option>
-
-                <option value="compare">
-                  Compare Both
-                </option>
 
               </select>
 
@@ -773,8 +522,85 @@ ${bestModel} achieved better forecasting accuracy.
 
         )}
 
-        {/* KEEP ALL YOUR OTHER CARDS/CHARTS BELOW UNCHANGED */}
+        {/* FORECAST TREND */}
+        <Card title="📊 Forecast Trend">
 
+          <ForecastTrendChart
+            results={
+              selectedProgramData
+                ? [
+                    selectedProgramData
+                  ]
+                : []
+            }
+          />
+
+        </Card>
+
+        {/* PROGRAM FORECAST */}
+        <Card title="📈 Program Forecast Results">
+
+          <ProgramForecastChart
+            results={
+              forecastResults
+            }
+          />
+
+        </Card>
+
+        {/* OVERALL ENROLLMENT */}
+        <Card title="🌍 Overall Enrollment Forecast">
+
+          <OverallEnrollmentChart
+            results={
+              forecastResults
+            }
+          />
+
+        </Card>
+
+        {/* ERROR CHARTS */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+          <Card title="📉 Error Metrics Comparison">
+
+            <ErrorComparisonChart
+              result={
+                selectedProgramData
+              }
+            />
+
+          </Card>
+
+          {/* SMART INSIGHT */}
+          <Card title="🧠 Smart Insight">
+
+            <div className="bg-blue-50 rounded-2xl p-6 h-full">
+
+              <pre className="whitespace-pre-wrap text-gray-700 leading-7 font-sans">
+
+                {smartInsight}
+
+              </pre>
+
+            </div>
+
+          </Card>
+
+        </div>
+
+        {/* OVERALL ERROR */}
+        <Card title="📊 Overall Error Metrics">
+
+          <OverallErrorMetricsChart
+            results={
+              forecastResults
+            }
+          />
+
+        </Card>
+
+        {/* FOOTER */}
         <Footer />
 
       </div>

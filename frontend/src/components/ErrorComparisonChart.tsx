@@ -8,74 +8,100 @@ import {
   XAxis,
   YAxis,
   Tooltip,
-  Legend,
   CartesianGrid,
-  LabelList,
+  Legend,
 
 } from "recharts";
 
-type ErrorComparisonChartProps = {
-  results: any[];
+type Props = {
+
+  result?: any;
+
 };
 
 export default function ErrorComparisonChart({
-  results,
-}: ErrorComparisonChartProps) {
+  result,
+}: Props) {
 
-  if (!results.length) {
-    return null;
+  // =====================================
+  // SAFETY CHECK
+  // =====================================
+  if (
+    !result ||
+    !result.metrics
+  ) {
+
+    return (
+
+      <div className="flex items-center justify-center h-[300px] text-gray-500">
+
+        No error metrics available.
+
+      </div>
+
+    );
+
   }
 
-  const firstProgram =
-    results[0];
+  // =====================================
+  // SAFE METRICS
+  // =====================================
+
+  const sarima =
+    result.metrics?.sarima || {
+
+      rmse: 0,
+      mae: 0,
+      mse: 0,
+      mape: 0,
+
+    };
+
+  const prophet =
+    result.metrics?.prophet || {
+
+      rmse: 0,
+      mae: 0,
+      mse: 0,
+      mape: 0,
+
+    };
+
+  // =====================================
+  // CHART DATA
+  // =====================================
 
   const data = [
 
     {
       metric: "RMSE",
-
-      SARIMA:
-        firstProgram.metrics.sarima.rmse,
-
-      Prophet:
-        firstProgram.metrics.prophet.rmse,
+      SARIMA: sarima.rmse,
+      Prophet: prophet.rmse,
     },
 
     {
       metric: "MAE",
-
-      SARIMA:
-        firstProgram.metrics.sarima.mae,
-
-      Prophet:
-        firstProgram.metrics.prophet.mae,
+      SARIMA: sarima.mae,
+      Prophet: prophet.mae,
     },
 
     {
       metric: "MSE",
-
-      SARIMA:
-        firstProgram.metrics.sarima.mse,
-
-      Prophet:
-        firstProgram.metrics.prophet.mse,
+      SARIMA: sarima.mse,
+      Prophet: prophet.mse,
     },
 
     {
       metric: "MAPE",
-
-      SARIMA:
-        firstProgram.metrics.sarima.mape,
-
-      Prophet:
-        firstProgram.metrics.prophet.mape,
+      SARIMA: sarima.mape,
+      Prophet: prophet.mape,
     },
 
   ];
 
   return (
 
-    <div className="w-full h-[400px]">
+    <div className="w-full h-[350px]">
 
       <ResponsiveContainer
         width="100%"
@@ -98,29 +124,15 @@ export default function ErrorComparisonChart({
 
           <Bar
             dataKey="SARIMA"
-            fill="#16a34a"
-            radius={[8, 8, 0, 0]}
-          >
-
-            <LabelList
-              dataKey="SARIMA"
-              position="top"
-            />
-
-          </Bar>
+            fill="#2563eb"
+            radius={[6, 6, 0, 0]}
+          />
 
           <Bar
             dataKey="Prophet"
             fill="#ea580c"
-            radius={[8, 8, 0, 0]}
-          >
-
-            <LabelList
-              dataKey="Prophet"
-              position="top"
-            />
-
-          </Bar>
+            radius={[6, 6, 0, 0]}
+          />
 
         </BarChart>
 
@@ -129,4 +141,5 @@ export default function ErrorComparisonChart({
     </div>
 
   );
+
 }
