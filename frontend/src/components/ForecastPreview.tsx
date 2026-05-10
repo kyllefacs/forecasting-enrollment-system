@@ -40,7 +40,32 @@ export default function ForecastPreview({
   }
 
   // =====================================
-  // HISTORICAL DATA
+  // SAFE VALUE
+  // =====================================
+
+  const safeValue = (
+    value: any
+  ) => {
+
+    if (
+      typeof value === "object" &&
+      value !== null
+    ) {
+
+      return Number(
+        value?.y ?? 0
+      );
+
+    }
+
+    return Number(
+      value ?? 0
+    );
+
+  };
+
+  // =====================================
+  // DATA
   // =====================================
 
   const historical =
@@ -55,13 +80,13 @@ export default function ForecastPreview({
       ?.prophet || [];
 
   // =====================================
-  // BUILD CHART
+  // BUILD HISTORICAL
   // =====================================
 
   const historicalData =
     historical.map(
       (
-        value: number,
+        value: any,
         index: number
       ) => ({
 
@@ -69,7 +94,7 @@ export default function ForecastPreview({
           `H${index + 1}`,
 
         Historical:
-          value,
+          safeValue(value),
 
         SARIMA:
           null,
@@ -80,10 +105,14 @@ export default function ForecastPreview({
       })
     );
 
+  // =====================================
+  // BUILD FORECAST
+  // =====================================
+
   const forecastData =
     sarimaForecast.map(
       (
-        value: number,
+        value: any,
         index: number
       ) => ({
 
@@ -94,12 +123,14 @@ export default function ForecastPreview({
           null,
 
         SARIMA:
-          value,
+          safeValue(value),
 
         Prophet:
-          prophetForecast[
-            index
-          ] ?? null,
+          safeValue(
+            prophetForecast[
+              index
+            ]
+          ),
 
       })
     );

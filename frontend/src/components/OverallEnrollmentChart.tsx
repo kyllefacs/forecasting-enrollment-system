@@ -40,7 +40,32 @@ export default function OverallEnrollmentChart({
   }
 
   // =====================================
-  // BUILD OVERALL DATA
+  // SAFE VALUE
+  // =====================================
+
+  const safeValue = (
+    value: any
+  ) => {
+
+    if (
+      typeof value === "object" &&
+      value !== null
+    ) {
+
+      return Number(
+        value?.y ?? 0
+      );
+
+    }
+
+    return Number(
+      value ?? 0
+    );
+
+  };
+
+  // =====================================
+  // TOTALS
   // =====================================
 
   const historicalTotals:
@@ -60,7 +85,7 @@ export default function OverallEnrollmentChart({
 
       historical.forEach(
         (
-          value: number,
+          value: any,
           index: number
         ) => {
 
@@ -72,7 +97,11 @@ export default function OverallEnrollmentChart({
               historicalTotals[
                 index
               ] || 0
-            ) + value;
+            )
+
+            +
+
+            safeValue(value);
 
         }
       );
@@ -83,7 +112,7 @@ export default function OverallEnrollmentChart({
 
       sarima.forEach(
         (
-          value: number,
+          value: any,
           index: number
         ) => {
 
@@ -95,7 +124,11 @@ export default function OverallEnrollmentChart({
               sarimaTotals[
                 index
               ] || 0
-            ) + value;
+            )
+
+            +
+
+            safeValue(value);
 
         }
       );
@@ -106,7 +139,7 @@ export default function OverallEnrollmentChart({
 
       prophet.forEach(
         (
-          value: number,
+          value: any,
           index: number
         ) => {
 
@@ -118,7 +151,11 @@ export default function OverallEnrollmentChart({
               prophetTotals[
                 index
               ] || 0
-            ) + value;
+            )
+
+            +
+
+            safeValue(value);
 
         }
       );
@@ -127,7 +164,7 @@ export default function OverallEnrollmentChart({
   );
 
   // =====================================
-  // CREATE CHART DATA
+  // BUILD CHART
   // =====================================
 
   const historicalData =
