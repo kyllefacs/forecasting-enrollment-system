@@ -15,10 +15,14 @@ import {
 
 type Props = {
   results?: any[];
+  forecastHorizon?: number;
 };
 
 export default function OverallEnrollmentChart({
+
   results = [],
+  forecastHorizon = 6,
+
 }: Props) {
 
   // =====================================
@@ -65,7 +69,7 @@ export default function OverallEnrollmentChart({
   };
 
   // =====================================
-  // TOTALS
+  // TOTAL ARRAYS
   // =====================================
 
   const historicalTotals:
@@ -77,8 +81,14 @@ export default function OverallEnrollmentChart({
   const prophetTotals:
     number[] = [];
 
+  // =====================================
+  // PROCESS RESULTS
+  // =====================================
+
   results.forEach(
     (item) => {
+
+      // HISTORICAL
 
       const historical =
         item?.historical || [];
@@ -89,14 +99,10 @@ export default function OverallEnrollmentChart({
           index: number
         ) => {
 
-          historicalTotals[
-            index
-          ] =
+          historicalTotals[index] =
 
             (
-              historicalTotals[
-                index
-              ] || 0
+              historicalTotals[index] || 0
             )
 
             +
@@ -106,9 +112,16 @@ export default function OverallEnrollmentChart({
         }
       );
 
+      // SARIMA
+
       const sarima =
-        item?.forecast
-          ?.sarima || [];
+        (
+          item?.forecast
+            ?.sarima || []
+        ).slice(
+          0,
+          forecastHorizon
+        );
 
       sarima.forEach(
         (
@@ -116,14 +129,10 @@ export default function OverallEnrollmentChart({
           index: number
         ) => {
 
-          sarimaTotals[
-            index
-          ] =
+          sarimaTotals[index] =
 
             (
-              sarimaTotals[
-                index
-              ] || 0
+              sarimaTotals[index] || 0
             )
 
             +
@@ -133,9 +142,16 @@ export default function OverallEnrollmentChart({
         }
       );
 
+      // PROPHET
+
       const prophet =
-        item?.forecast
-          ?.prophet || [];
+        (
+          item?.forecast
+            ?.prophet || []
+        ).slice(
+          0,
+          forecastHorizon
+        );
 
       prophet.forEach(
         (
@@ -143,14 +159,10 @@ export default function OverallEnrollmentChart({
           index: number
         ) => {
 
-          prophetTotals[
-            index
-          ] =
+          prophetTotals[index] =
 
             (
-              prophetTotals[
-                index
-              ] || 0
+              prophetTotals[index] || 0
             )
 
             +
@@ -164,7 +176,7 @@ export default function OverallEnrollmentChart({
   );
 
   // =====================================
-  // BUILD CHART
+  // HISTORICAL DATA
   // =====================================
 
   const historicalData =
@@ -189,6 +201,10 @@ export default function OverallEnrollmentChart({
       })
     );
 
+  // =====================================
+  // FORECAST DATA
+  // =====================================
+
   const forecastData =
     sarimaTotals.map(
       (
@@ -206,12 +222,14 @@ export default function OverallEnrollmentChart({
           value,
 
         Prophet:
-          prophetTotals[
-            index
-          ] ?? null,
+          prophetTotals[index] ?? null,
 
       })
     );
+
+  // =====================================
+  // FINAL CHART DATA
+  // =====================================
 
   const chartData = [
 
@@ -219,6 +237,10 @@ export default function OverallEnrollmentChart({
     ...forecastData,
 
   ];
+
+  // =====================================
+  // RENDER
+  // =====================================
 
   return (
 

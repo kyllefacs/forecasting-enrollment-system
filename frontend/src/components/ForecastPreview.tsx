@@ -15,10 +15,12 @@ import {
 
 type Props = {
   result?: any;
+  forecastHorizon?: number;
 };
 
 export default function ForecastPreview({
   result,
+  forecastHorizon = 6,
 }: Props) {
 
   // =====================================
@@ -72,12 +74,22 @@ export default function ForecastPreview({
     result?.historical || [];
 
   const sarimaForecast =
+  (
     result?.forecast
-      ?.sarima || [];
+      ?.sarima || []
+  ).slice(
+    0,
+    forecastHorizon
+  );
 
-  const prophetForecast =
+const prophetForecast =
+  (
     result?.forecast
-      ?.prophet || [];
+      ?.prophet || []
+  ).slice(
+    0,
+    forecastHorizon
+  );
 
   // =====================================
   // BUILD HISTORICAL

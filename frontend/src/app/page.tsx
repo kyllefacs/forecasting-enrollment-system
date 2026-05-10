@@ -47,6 +47,10 @@ export default function Home() {
     setSelectedProgram
   ] = useState("");
 
+  const [
+  forecastHorizon,
+  setForecastHorizon
+] = useState(6);
   // =====================================
   // VALIDATION
   // =====================================
@@ -597,21 +601,50 @@ The lower RMSE indicates better forecasting performance.
             </Card>
 
             {/* FORECAST HORIZON */}
-            <Card title="⏳ Forecast Horizon">
+<Card title="⏳ Forecast Horizon">
 
-              <select
-                className="w-full p-4 rounded-2xl border border-gray-300 bg-white"
-              >
+  <select
 
-                <option>
+    value={forecastHorizon}
 
-                  6 Semesters
+    onChange={(e) =>
 
-                </option>
+      setForecastHorizon(
+        Number(e.target.value)
+      )
 
-              </select>
+    }
 
-            </Card>
+    className="w-full p-4 rounded-2xl border border-gray-300 bg-white"
+  >
+
+    <option value={1}>
+
+      1 Semester
+
+    </option>
+
+    <option value={3}>
+
+      3 Semesters
+
+    </option>
+
+    <option value={6}>
+
+      6 Semesters
+
+    </option>
+
+    <option value={10}>
+
+      10 Semesters
+
+    </option>
+
+  </select>
+
+</Card>
 
           </div>
 
@@ -621,17 +654,19 @@ The lower RMSE indicates better forecasting performance.
         <Card title="📊 Forecast Trend">
 
           <ForecastPreview
-            result={selectedProgramData}
-          />
+  result={selectedProgramData}
+  forecastHorizon={forecastHorizon}
+/>
 
         </Card>
 
         {/* OVERALL ENROLLMENT */}
         <Card title="🌍 Overall Enrollment Forecast">
 
-          <OverallEnrollmentChart
-            results={forecastResults}
-          />
+         <OverallEnrollmentChart
+  results={forecastResults}
+  forecastHorizon={forecastHorizon}
+/>
 
         </Card>
 
@@ -844,9 +879,10 @@ The lower RMSE indicates better forecasting performance.
         {/* PROGRAM FORECAST */}
         <Card title="📊 Program Forecast Comparison">
 
-          <ForecastResults
-            results={forecastResults}
-          />
+       <ForecastResults
+  results={forecastResults}
+  forecastHorizon={forecastHorizon}
+/>
 
         </Card>
 

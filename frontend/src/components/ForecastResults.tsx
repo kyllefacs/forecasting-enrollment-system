@@ -15,10 +15,12 @@ import {
 
 type Props = {
   results?: any[];
+  forecastHorizon?: number;
 };
 
 export default function ForecastResults({
   results = [],
+  forecastHorizon = 6,
 }: Props) {
 
   // =====================================
@@ -53,8 +55,10 @@ export default function ForecastResults({
         SARIMA:
           Number(
 
-            item?.forecast
-              ?.sarima?.[0] ?? 0
+           item?.forecast
+  ?.sarima?.[
+    forecastHorizon - 1
+  ]
 
           ),
 
@@ -62,8 +66,9 @@ export default function ForecastResults({
           Number(
 
             item?.forecast
-              ?.prophet?.[0] ?? 0
-
+  ?.prophet?.[
+    forecastHorizon - 1
+  ]
           ),
 
       })
