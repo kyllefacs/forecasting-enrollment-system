@@ -1,12 +1,10 @@
 // =========================================
-// FILE: frontend/src/utils/api.ts
-// FULLY FIXED VERSION
+// FILE: src/utils/api.ts
 // =========================================
 
 const API_URL =
   process.env
-    .NEXT_PUBLIC_API_URL ||
-  "http://127.0.0.1:8000";
+    .NEXT_PUBLIC_API_URL;
 
 // =========================================
 // UPLOAD DATASET
@@ -15,6 +13,14 @@ export const uploadDataset =
   async (file: File) => {
 
     try {
+
+      if (!API_URL) {
+
+        throw new Error(
+          "API URL is missing."
+        );
+
+      }
 
       const formData =
         new FormData();
@@ -39,15 +45,14 @@ export const uploadDataset =
 
         );
 
-      // HANDLE API ERRORS
       if (!response.ok) {
 
-        const errorText =
+        const errorData =
           await response.text();
 
         console.error(
           "API ERROR:",
-          errorText
+          errorData
         );
 
         throw new Error(
@@ -56,10 +61,7 @@ export const uploadDataset =
 
       }
 
-      const data =
-        await response.json();
-
-      return data;
+      return await response.json();
 
     } catch (error) {
 
