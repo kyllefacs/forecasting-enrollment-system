@@ -334,29 +334,73 @@ ${bestModel} achieved better forecasting accuracy.
           uploadedFile
         );
 
-      if (response.success) {
+     if (response.success) {
 
-        setForecastResults(
-          response.results
-        );
+  // =====================================
+  // MAP DEPARTMENTS FROM EXCEL
+  // =====================================
+  const enrichedResults =
+    response.results.map(
+      (result: any) => {
 
-        if (
-          response.results.length > 0
-        ) {
+        // Find matching row
+        const matchedRow =
+          jsonData.find(
+            (row: any) =>
 
-          setSelectedDepartment(
-            response.results[0]
-              .department
+              String(
+                row["Program"]
+              ).trim()
+
+              ===
+
+              String(
+                result.program
+              ).trim()
+
           );
 
-          setSelectedProgram(
-            response.results[0]
-              .program
-          );
+        return {
 
-        }
+          ...result,
+
+          department:
+            matchedRow?.[
+              "Department"
+            ] || "Unknown",
+
+        };
 
       }
+    );
+
+  // Save results
+  setForecastResults(
+    enrichedResults
+  );
+
+  // Default selections
+  if (
+    enrichedResults.length > 0
+  ) {
+
+    setSelectedDepartment(
+
+      enrichedResults[0]
+        .department
+
+    );
+
+    setSelectedProgram(
+
+      enrichedResults[0]
+        .program
+
+    );
+
+  }
+
+}
 
     } catch (error) {
 
