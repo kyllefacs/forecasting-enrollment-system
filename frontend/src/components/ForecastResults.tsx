@@ -1,204 +1,109 @@
-type ForecastResultsProps = {
-  results: any[];
+"use client";
+
+type Props = {
+  results?: any[];
 };
 
 export default function ForecastResults({
-  results,
-}: ForecastResultsProps) {
+  results = [],
+}: Props) {
 
-  if (!results.length) {
-    return null;
+  if (results.length === 0) {
+
+    return (
+
+      <div className="flex items-center justify-center h-[300px] text-gray-400">
+
+        No forecast results available
+
+      </div>
+
+    );
+
   }
 
   return (
-    <div className="space-y-6">
 
-      {results.map((program, index) => (
+    <div className="overflow-auto">
 
-        <div
-          key={index}
-          className="border border-gray-200 rounded-3xl overflow-hidden"
-        >
+      <table className="w-full border-collapse">
 
-          {/* HEADER */}
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-4">
+        <thead>
 
-            <h2 className="text-2xl font-bold">
-              {program.program}
-            </h2>
+          <tr className="bg-gray-100">
 
-          </div>
+            <th className="p-3 text-left">
 
-          {/* CONTENT */}
-          <div className="p-6 grid md:grid-cols-2 gap-6">
+              Program
 
-            {/* SARIMA */}
-            <div className="bg-green-50 rounded-2xl p-5">
+            </th>
 
-              <h3 className="font-bold text-green-700 mb-4">
-                SARIMA Forecast
-              </h3>
+            <th className="p-3 text-left">
 
-              <div className="space-y-2">
+              SARIMA
 
-                {program.forecast.sarima.map(
-                  (
-                    value: number,
-                    idx: number
-                  ) => (
+            </th>
 
-                    <div
-                      key={idx}
-                      className="flex justify-between"
-                    >
+            <th className="p-3 text-left">
 
-                      <span>
-                        Forecast {idx + 1}
-                      </span>
+              Prophet
 
-                      <span className="font-bold">
-                        {value}
-                      </span>
+            </th>
 
-                    </div>
+          </tr>
 
-                  )
-                )}
+        </thead>
 
-              </div>
+        <tbody>
 
-            </div>
+          {
+            results.map(
+              (
+                item,
+                index
+              ) => (
 
-            {/* PROPHET */}
-            <div className="bg-orange-50 rounded-2xl p-5">
+                <tr
+                  key={index}
+                  className="border-b"
+                >
 
-              <h3 className="font-bold text-orange-700 mb-4">
-                Prophet Forecast
-              </h3>
+                  <td className="p-3">
 
-              <div className="space-y-2">
+                    {item.program}
 
-                {program.forecast.prophet.map(
-                  (
-                    value: number,
-                    idx: number
-                  ) => (
+                  </td>
 
-                    <div
-                      key={idx}
-                      className="flex justify-between"
-                    >
+                  <td className="p-3 text-blue-600 font-semibold">
 
-                      <span>
-                        Forecast {idx + 1}
-                      </span>
+                    {
+                      item?.forecast
+                        ?.sarima?.[0] ?? 0
+                    }
 
-                      <span className="font-bold">
-                        {value}
-                      </span>
+                  </td>
 
-                    </div>
+                  <td className="p-3 text-orange-600 font-semibold">
 
-                  )
-                )}
+                    {
+                      item?.forecast
+                        ?.prophet?.[0] ?? 0
+                    }
 
-              </div>
+                  </td>
 
-            </div>
+                </tr>
 
-            {/* METRICS */}
-            <div className="md:col-span-2 bg-gray-50 rounded-2xl p-5">
+              )
+            )
+          }
 
-              <h3 className="font-bold text-gray-800 mb-4">
-                Model Evaluation
-              </h3>
+        </tbody>
 
-              <div className="grid md:grid-cols-2 gap-6">
-
-                {/* SARIMA */}
-                <div>
-
-                  <h4 className="font-semibold text-green-700 mb-2">
-                    SARIMA
-                  </h4>
-
-                  <div className="space-y-1 text-sm">
-
-                    <p>
-                      RMSE:
-                      {" "}
-                      {program.metrics.sarima.rmse}
-                    </p>
-
-                    <p>
-                      MAE:
-                      {" "}
-                      {program.metrics.sarima.mae}
-                    </p>
-
-                    <p>
-                      MSE:
-                      {" "}
-                      {program.metrics.sarima.mse}
-                    </p>
-
-                    <p>
-                      MAPE:
-                      {" "}
-                      {program.metrics.sarima.mape}%
-                    </p>
-
-                  </div>
-
-                </div>
-
-                {/* PROPHET */}
-                <div>
-
-                  <h4 className="font-semibold text-orange-700 mb-2">
-                    Prophet
-                  </h4>
-
-                  <div className="space-y-1 text-sm">
-
-                    <p>
-                      RMSE:
-                      {" "}
-                      {program.metrics.prophet.rmse}
-                    </p>
-
-                    <p>
-                      MAE:
-                      {" "}
-                      {program.metrics.prophet.mae}
-                    </p>
-
-                    <p>
-                      MSE:
-                      {" "}
-                      {program.metrics.prophet.mse}
-                    </p>
-
-                    <p>
-                      MAPE:
-                      {" "}
-                      {program.metrics.prophet.mape}%
-                    </p>
-
-                  </div>
-
-                </div>
-
-              </div>
-
-            </div>
-
-          </div>
-
-        </div>
-
-      ))}
+      </table>
 
     </div>
+
   );
+
 }

@@ -2,7 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import * as XLSX from "xlsx";
-
+import ForecastPreview from "@/components/ForecastPreview";
+import ForecastResults from "@/components/ForecastResults";
+import OverallEnrollmentChart from "@/components/OverallEnrollmentChart";
 import Footer from "@/components/Footer";
 import Card from "@/components/Card";
 import UploadBox from "@/components/UploadBox";
@@ -10,7 +12,6 @@ import ExportButtons from "@/components/ExportButtons";
 import ErrorComparisonChart from "@/components/ErrorComparisonChart";
 import OverallErrorMetricsChart from "@/components/OverallErrorMetricsChart";
 import ValidationPanel from "@/components/ValidationPanel";
-
 import { uploadDataset } from "@/utils/api";
 import { validateDataset } from "@/utils/validateDataset";
 
@@ -595,246 +596,30 @@ The lower RMSE indicates better forecasting performance.
 
         )}
 
-      {/* FORECAST TREND */}
+     {/* FORECAST TREND */}
 <Card title="📊 Forecast Trend">
 
-  <div className="bg-white rounded-2xl p-6">
-
-    {
-      selectedProgramData ? (
-
-        <div className="space-y-4">
-
-          <h2 className="text-xl font-bold text-gray-800">
-
-            {selectedProgram}
-
-          </h2>
-
-          <div className="grid grid-cols-2 gap-4">
-
-            <div className="bg-blue-50 rounded-xl p-4">
-
-              <p className="text-sm text-gray-500">
-
-                SARIMA Forecast
-
-              </p>
-
-              <p className="text-2xl font-bold text-blue-600">
-
-                {
-
-                  selectedProgramData
-                    ?.forecast
-                    ?.sarima?.[0] ?? 0
-
-                }
-
-              </p>
-
-            </div>
-
-            <div className="bg-orange-50 rounded-xl p-4">
-
-              <p className="text-sm text-gray-500">
-
-                Prophet Forecast
-
-              </p>
-
-              <p className="text-2xl font-bold text-orange-600">
-
-                {
-
-                  selectedProgramData
-                    ?.forecast
-                    ?.prophet?.[0] ?? 0
-
-                }
-
-              </p>
-
-            </div>
-
-          </div>
-
-        </div>
-
-      ) : (
-
-        <div className="text-gray-400 text-center py-10">
-
-          Upload dataset to generate forecast
-
-        </div>
-
-      )
-    }
-
-  </div>
+  <ForecastPreview
+  result={selectedProgramData}
+/>
 
 </Card>
 
 {/* PROGRAM FORECAST */}
 <Card title="📈 Program Forecast Results">
 
-  <div className="overflow-auto">
-
-    <table className="w-full border-collapse">
-
-      <thead>
-
-        <tr className="bg-gray-100">
-
-          <th className="p-3 text-left">
-
-            Program
-
-          </th>
-
-          <th className="p-3 text-left">
-
-            SARIMA
-
-          </th>
-
-          <th className="p-3 text-left">
-
-            Prophet
-
-          </th>
-
-        </tr>
-
-      </thead>
-
-      <tbody>
-
-        {
-          forecastResults.map(
-            (
-              item,
-              index
-            ) => (
-
-              <tr
-                key={index}
-                className="border-b"
-              >
-
-                <td className="p-3">
-
-                  {item.program}
-
-                </td>
-
-                <td className="p-3 text-blue-600 font-semibold">
-
-                  {
-                    item.forecast
-                      ?.sarima?.[0] ?? 0
-                  }
-
-                </td>
-
-                <td className="p-3 text-orange-600 font-semibold">
-
-                  {
-                    item.forecast
-                      ?.prophet?.[0] ?? 0
-                  }
-
-                </td>
-
-              </tr>
-
-            )
-          )
-        }
-
-      </tbody>
-
-    </table>
-
-  </div>
+ <ForecastResults
+  results={forecastResults}
+/>
 
 </Card>
 
 {/* OVERALL ENROLLMENT */}
 <Card title="🌍 Overall Enrollment Forecast">
 
-  <div className="grid grid-cols-2 gap-6">
-
-    <div className="bg-green-50 rounded-2xl p-6">
-
-      <h3 className="text-lg font-semibold text-gray-700">
-
-        Total SARIMA Forecast
-
-      </h3>
-
-      <p className="text-4xl font-black text-green-600 mt-4">
-
-        {
-
-          forecastResults.reduce(
-            (
-              total,
-              item
-            ) =>
-
-              total +
-
-              (
-                item.forecast
-                  ?.sarima?.[0] ?? 0
-              ),
-
-            0
-          )
-
-        }
-
-      </p>
-
-    </div>
-
-    <div className="bg-purple-50 rounded-2xl p-6">
-
-      <h3 className="text-lg font-semibold text-gray-700">
-
-        Total Prophet Forecast
-
-      </h3>
-
-      <p className="text-4xl font-black text-purple-600 mt-4">
-
-        {
-
-          forecastResults.reduce(
-            (
-              total,
-              item
-            ) =>
-
-              total +
-
-              (
-                item.forecast
-                  ?.prophet?.[0] ?? 0
-              ),
-
-            0
-          )
-
-        }
-
-      </p>
-
-    </div>
-
-  </div>
+  <OverallEnrollmentChart
+    results={forecastResults}
+  />
 
 </Card>
 
@@ -844,9 +629,7 @@ The lower RMSE indicates better forecasting performance.
   <Card title="📉 Error Metrics Comparison">
 
     <ErrorComparisonChart
-      result={
-        selectedProgramData
-      }
+      result={selectedProgramData}
     />
 
   </Card>

@@ -1,93 +1,71 @@
-type ForecastPreviewProps = {
-  data: {
-    [program: string]: {
-      ds: string;
-      y: number;
-    }[];
-  };
+"use client";
+
+type Props = {
+  result?: any;
 };
 
 export default function ForecastPreview({
-  data,
-}: ForecastPreviewProps) {
+  result,
+}: Props) {
 
-  const programs = Object.keys(data);
+  if (!result) {
 
-  if (programs.length === 0) {
-    return null;
+    return (
+
+      <div className="flex items-center justify-center h-[300px] text-gray-400">
+
+        Upload dataset to generate forecast
+
+      </div>
+
+    );
+
   }
 
+  const sarima =
+    result?.forecast?.sarima?.[0] ?? 0;
+
+  const prophet =
+    result?.forecast?.prophet?.[0] ?? 0;
+
   return (
-    <div className="space-y-6">
 
-      {programs.map((program) => (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-        <div
-          key={program}
-          className="border border-gray-200 rounded-2xl overflow-hidden"
-        >
+      <div className="bg-blue-50 rounded-2xl p-6">
 
-          {/* HEADER */}
-          <div className="bg-blue-50 px-5 py-4 border-b border-gray-200">
+        <h3 className="text-lg font-semibold text-gray-700">
 
-            <h3 className="font-bold text-blue-700 text-lg">
-              {program}
-            </h3>
+          SARIMA Forecast
 
-          </div>
+        </h3>
 
-          {/* TABLE */}
-          <div className="overflow-x-auto">
+        <p className="text-4xl font-black text-blue-600 mt-4">
 
-            <table className="w-full border-collapse">
+          {sarima}
 
-              <thead>
+        </p>
 
-                <tr className="bg-gray-50">
+      </div>
 
-                  <th className="text-left px-4 py-3 border-b border-gray-200">
-                    Semester
-                  </th>
+      <div className="bg-orange-50 rounded-2xl p-6">
 
-                  <th className="text-left px-4 py-3 border-b border-gray-200">
-                    Enrollment
-                  </th>
+        <h3 className="text-lg font-semibold text-gray-700">
 
-                </tr>
+          Prophet Forecast
 
-              </thead>
+        </h3>
 
-              <tbody>
+        <p className="text-4xl font-black text-orange-600 mt-4">
 
-                {data[program].map((row, index) => (
+          {prophet}
 
-                  <tr
-                    key={index}
-                    className="hover:bg-gray-50"
-                  >
+        </p>
 
-                    <td className="px-4 py-3 border-b border-gray-100">
-                      {row.ds}
-                    </td>
-
-                    <td className="px-4 py-3 border-b border-gray-100">
-                      {row.y}
-                    </td>
-
-                  </tr>
-
-                ))}
-
-              </tbody>
-
-            </table>
-
-          </div>
-
-        </div>
-
-      ))}
+      </div>
 
     </div>
+
   );
+
 }

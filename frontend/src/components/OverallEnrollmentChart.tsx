@@ -1,279 +1,99 @@
-// =========================================
-// FILE: src/components/OverallEnrollmentChart.tsx
-// =========================================
-
 "use client";
 
-import {
-
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-  Legend,
-
-} from "recharts";
-
-type OverallEnrollmentChartProps = {
-
-  results: any[];
-
-  horizon: number;
-
-  modelView: string;
-
+type Props = {
+  results?: any[];
 };
 
 export default function OverallEnrollmentChart({
+  results = [],
+}: Props) {
 
-  results,
-  horizon,
-  modelView,
+  if (results.length === 0) {
 
-}: OverallEnrollmentChartProps) {
+    return (
 
-  if (!results.length) {
+      <div className="flex items-center justify-center h-[300px] text-gray-400">
 
-    return null;
+        No enrollment data available
+
+      </div>
+
+    );
 
   }
 
-  // =====================================
-  // COMBINE HISTORICAL DATA
-  // =====================================
-  const historicalMap:
-    Record<string, number> = {};
+  const totalSarima =
+    results.reduce(
+      (
+        sum,
+        item
+      ) =>
 
-  results.forEach((program) => {
+        sum +
 
-    program.historical.forEach(
-      (item: any) => {
+        (
+          item?.forecast
+            ?.sarima?.[0] ?? 0
+        ),
 
-        if (
-          !historicalMap[item.ds]
-        ) {
-
-          historicalMap[item.ds] = 0;
-
-        }
-
-        historicalMap[item.ds] +=
-          Number(item.y);
-
-      }
+      0
     );
 
-  });
+  const totalProphet =
+    results.reduce(
+      (
+        sum,
+        item
+      ) =>
 
-  // =====================================
-  // SORT HISTORICAL
-  // =====================================
-  const historical = Object.keys(
-    historicalMap
-  )
+        sum +
 
-    .sort()
-
-    .map((date) => ({
-
-      name: date,
-
-      historical:
-        historicalMap[date],
-
-    }));
-
-  // =====================================
-  // TOTAL SARIMA
-  // =====================================
-  const sarimaTotals =
-    Array(horizon).fill(0);
-
-  results.forEach((program) => {
-
-    program.forecast.sarima
-
-      .slice(0, horizon)
-
-      .forEach(
         (
-          value: number,
-          index: number
-        ) => {
-
-          sarimaTotals[index] +=
-            Number(value);
-
-        }
-      );
-
-  });
-
-  // =====================================
-  // TOTAL PROPHET
-  // =====================================
-  const prophetTotals =
-    Array(horizon).fill(0);
-
-  results.forEach((program) => {
-
-    program.forecast.prophet
-
-      .slice(0, horizon)
-
-      .forEach(
-        (
-          value: number,
-          index: number
-        ) => {
-
-          prophetTotals[index] +=
-            Number(value);
-
-        }
-      );
-
-  });
-
-  // =====================================
-  // FORECAST DATA
-  // =====================================
-  const forecastData =
-    Array.from({
-      length: horizon,
-    }).map((_, index) => ({
-
-      name: `F${index + 1}`,
-
-      sarima:
-        Math.round(
-          sarimaTotals[index]
+          item?.forecast
+            ?.prophet?.[0] ?? 0
         ),
 
-      prophet:
-        Math.round(
-          prophetTotals[index]
-        ),
-
-    }));
-
-  // =====================================
-  // MERGE
-  // =====================================
-  const chartData = [
-
-    ...historical,
-
-    ...forecastData,
-
-  ];
+      0
+    );
 
   return (
 
-    <div className="w-full h-[500px]">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-      <ResponsiveContainer
-        width="100%"
-        height="100%"
-      >
+      <div className="bg-green-50 rounded-2xl p-6">
 
-        <LineChart
-          data={chartData}
-        >
+        <h3 className="text-lg font-semibold text-gray-700">
 
-          <CartesianGrid
-            strokeDasharray="3 3"
-          />
+          Total SARIMA Forecast
 
-          <XAxis dataKey="name" />
+        </h3>
 
-          <YAxis />
+        <p className="text-4xl font-black text-green-600 mt-4">
 
-          <Tooltip />
+          {totalSarima}
 
-          <Legend />
+        </p>
 
-          {/* HISTORICAL */}
-          <Line
+      </div>
 
-            type="monotone"
+      <div className="bg-purple-50 rounded-2xl p-6">
 
-            dataKey="historical"
+        <h3 className="text-lg font-semibold text-gray-700">
 
-            stroke="#2563eb"
+          Total Prophet Forecast
 
-            strokeWidth={4}
+        </h3>
 
-            name="Historical"
+        <p className="text-4xl font-black text-purple-600 mt-4">
 
-          />
+          {totalProphet}
 
-          {/* SARIMA */}
-          {(
+        </p>
 
-            modelView === "sarima"
-
-            ||
-
-            modelView === "compare"
-
-          ) && (
-
-            <Line
-
-              type="monotone"
-
-              dataKey="sarima"
-
-              stroke="#16a34a"
-
-              strokeWidth={4}
-
-              strokeDasharray="5 5"
-
-              name="SARIMA Forecast"
-
-            />
-
-          )}
-
-          {/* PROPHET */}
-          {(
-
-            modelView === "prophet"
-
-            ||
-
-            modelView === "compare"
-
-          ) && (
-
-            <Line
-
-              type="monotone"
-
-              dataKey="prophet"
-
-              stroke="#ea580c"
-
-              strokeWidth={4}
-
-              strokeDasharray="5 5"
-
-              name="Prophet Forecast"
-
-            />
-
-          )}
-
-        </LineChart>
-
-      </ResponsiveContainer>
+      </div>
 
     </div>
 
   );
+
 }
