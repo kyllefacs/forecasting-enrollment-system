@@ -7,11 +7,7 @@ import Footer from "@/components/Footer";
 import Card from "@/components/Card";
 import UploadBox from "@/components/UploadBox";
 import ExportButtons from "@/components/ExportButtons";
-
-import ForecastTrendChart from "@/components/ForecastTrendChart";
 import ErrorComparisonChart from "@/components/ErrorComparisonChart";
-import ProgramForecastChart from "@/components/ProgramForecastChart";
-import OverallEnrollmentChart from "@/components/OverallEnrollmentChart";
 import OverallErrorMetricsChart from "@/components/OverallErrorMetricsChart";
 import ValidationPanel from "@/components/ValidationPanel";
 
@@ -65,83 +61,160 @@ export default function Home() {
   // =====================================
 
   const departmentOptions =
-    useMemo(() => {
+  useMemo(() => {
 
-      if (!excelData.length) {
-        return [];
-      }
+    if (!excelData.length) {
+      return [];
+    }
 
-      return [
+    // =================================
+    // FIND REAL DEPARTMENT COLUMN
+    // =================================
+    const firstRow =
+      excelData[0];
 
-        ...new Set(
+    const departmentKey =
+      Object.keys(firstRow).find(
+        (key) =>
 
-          excelData.map(
-            (row: any) =>
+          key
+            .toLowerCase()
+            .trim()
 
-              String(
-                row["Department"]
-              ).trim()
+            ===
 
-          )
+          "department"
+      );
 
-        ),
+    if (!departmentKey) {
 
-      ];
+      console.log(
+        "Department column not found"
+      );
 
-    }, [excelData]);
+      console.log(
+        Object.keys(firstRow)
+      );
+
+      return [];
+
+    }
+
+    return [
+
+      ...new Set(
+
+        excelData.map(
+          (row: any) =>
+
+            String(
+              row[
+                departmentKey
+              ]
+            ).trim()
+
+        )
+
+      ),
+
+    ];
+
+  }, [excelData]);
 
   // =====================================
   // PROGRAM OPTIONS
   // =====================================
 
-  const programOptions =
-    useMemo(() => {
+ const programOptions =
+  useMemo(() => {
 
-      if (
-        !excelData.length ||
-        !selectedDepartment
-      ) {
+    if (
+      !excelData.length ||
+      !selectedDepartment
+    ) {
 
-        return [];
+      return [];
 
-      }
+    }
 
-      return [
+    const firstRow =
+      excelData[0];
 
-        ...new Set(
+    const departmentKey =
+      Object.keys(firstRow).find(
+        (key) =>
 
-          excelData
+          key
+            .toLowerCase()
+            .trim()
 
-            .filter(
-              (row: any) =>
+            ===
 
-                String(
-                  row["Department"]
-                ).trim()
+          "department"
+      );
 
-                ===
+    const programKey =
+      Object.keys(firstRow).find(
+        (key) =>
 
-                selectedDepartment
+          key
+            .toLowerCase()
+            .trim()
 
-            )
+            ===
 
-            .map(
-              (row: any) =>
+          "program"
+      );
 
-                String(
-                  row["Program"]
-                ).trim()
+    if (
+      !departmentKey ||
+      !programKey
+    ) {
 
-            )
+      return [];
 
-        ),
+    }
 
-      ];
+    return [
 
-    }, [
-      excelData,
-      selectedDepartment
-    ]);
+      ...new Set(
+
+        excelData
+
+          .filter(
+            (row: any) =>
+
+              String(
+                row[
+                  departmentKey
+                ]
+              ).trim()
+
+              ===
+
+              selectedDepartment
+
+          )
+
+          .map(
+            (row: any) =>
+
+              String(
+                row[
+                  programKey
+                ]
+              ).trim()
+
+          )
+
+      ),
+
+    ];
+
+  }, [
+    excelData,
+    selectedDepartment
+  ]);
 
   // =====================================
   // AUTO SELECT DEPARTMENT
@@ -522,86 +595,290 @@ The lower RMSE indicates better forecasting performance.
 
         )}
 
-        {/* FORECAST TREND */}
-        <Card title="📊 Forecast Trend">
+      {/* FORECAST TREND */}
+<Card title="📊 Forecast Trend">
 
-          <ForecastTrendChart
-            results={
-              selectedProgramData
-                ? [
-                    selectedProgramData
-                  ]
-                : []
-            }
-          />
+  <div className="bg-white rounded-2xl p-6">
 
-        </Card>
+    {
+      selectedProgramData ? (
 
-        {/* PROGRAM FORECAST */}
-        <Card title="📈 Program Forecast Results">
+        <div className="space-y-4">
 
-          <ProgramForecastChart
-            results={
-              forecastResults
-            }
-          />
+          <h2 className="text-xl font-bold text-gray-800">
 
-        </Card>
+            {selectedProgram}
 
-        {/* OVERALL ENROLLMENT */}
-        <Card title="🌍 Overall Enrollment Forecast">
+          </h2>
 
-          <OverallEnrollmentChart
-            results={
-              forecastResults
-            }
-          />
+          <div className="grid grid-cols-2 gap-4">
 
-        </Card>
+            <div className="bg-blue-50 rounded-xl p-4">
 
-        {/* ERROR CHARTS */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <p className="text-sm text-gray-500">
 
-          <Card title="📉 Error Metrics Comparison">
+                SARIMA Forecast
 
-            <ErrorComparisonChart
-              result={
-                selectedProgramData
-              }
-            />
+              </p>
 
-          </Card>
+              <p className="text-2xl font-bold text-blue-600">
 
-          {/* SMART INSIGHT */}
-          <Card title="🧠 Smart Insight">
+                {
 
-            <div className="bg-blue-50 rounded-2xl p-6 h-full">
+                  selectedProgramData
+                    ?.forecast
+                    ?.sarima?.[0] ?? 0
 
-              <pre className="whitespace-pre-wrap text-gray-700 leading-7 font-sans">
+                }
 
-                {smartInsight}
-
-              </pre>
+              </p>
 
             </div>
 
-          </Card>
+            <div className="bg-orange-50 rounded-xl p-4">
+
+              <p className="text-sm text-gray-500">
+
+                Prophet Forecast
+
+              </p>
+
+              <p className="text-2xl font-bold text-orange-600">
+
+                {
+
+                  selectedProgramData
+                    ?.forecast
+                    ?.prophet?.[0] ?? 0
+
+                }
+
+              </p>
+
+            </div>
+
+          </div>
 
         </div>
 
-        {/* OVERALL ERROR */}
-        <Card title="📊 Overall Error Metrics">
+      ) : (
 
-          <OverallErrorMetricsChart
-            results={
-              forecastResults
-            }
-          />
+        <div className="text-gray-400 text-center py-10">
 
-        </Card>
+          Upload dataset to generate forecast
 
-        {/* FOOTER */}
-        <Footer />
+        </div>
+
+      )
+    }
+
+  </div>
+
+</Card>
+
+{/* PROGRAM FORECAST */}
+<Card title="📈 Program Forecast Results">
+
+  <div className="overflow-auto">
+
+    <table className="w-full border-collapse">
+
+      <thead>
+
+        <tr className="bg-gray-100">
+
+          <th className="p-3 text-left">
+
+            Program
+
+          </th>
+
+          <th className="p-3 text-left">
+
+            SARIMA
+
+          </th>
+
+          <th className="p-3 text-left">
+
+            Prophet
+
+          </th>
+
+        </tr>
+
+      </thead>
+
+      <tbody>
+
+        {
+          forecastResults.map(
+            (
+              item,
+              index
+            ) => (
+
+              <tr
+                key={index}
+                className="border-b"
+              >
+
+                <td className="p-3">
+
+                  {item.program}
+
+                </td>
+
+                <td className="p-3 text-blue-600 font-semibold">
+
+                  {
+                    item.forecast
+                      ?.sarima?.[0] ?? 0
+                  }
+
+                </td>
+
+                <td className="p-3 text-orange-600 font-semibold">
+
+                  {
+                    item.forecast
+                      ?.prophet?.[0] ?? 0
+                  }
+
+                </td>
+
+              </tr>
+
+            )
+          )
+        }
+
+      </tbody>
+
+    </table>
+
+  </div>
+
+</Card>
+
+{/* OVERALL ENROLLMENT */}
+<Card title="🌍 Overall Enrollment Forecast">
+
+  <div className="grid grid-cols-2 gap-6">
+
+    <div className="bg-green-50 rounded-2xl p-6">
+
+      <h3 className="text-lg font-semibold text-gray-700">
+
+        Total SARIMA Forecast
+
+      </h3>
+
+      <p className="text-4xl font-black text-green-600 mt-4">
+
+        {
+
+          forecastResults.reduce(
+            (
+              total,
+              item
+            ) =>
+
+              total +
+
+              (
+                item.forecast
+                  ?.sarima?.[0] ?? 0
+              ),
+
+            0
+          )
+
+        }
+
+      </p>
+
+    </div>
+
+    <div className="bg-purple-50 rounded-2xl p-6">
+
+      <h3 className="text-lg font-semibold text-gray-700">
+
+        Total Prophet Forecast
+
+      </h3>
+
+      <p className="text-4xl font-black text-purple-600 mt-4">
+
+        {
+
+          forecastResults.reduce(
+            (
+              total,
+              item
+            ) =>
+
+              total +
+
+              (
+                item.forecast
+                  ?.prophet?.[0] ?? 0
+              ),
+
+            0
+          )
+
+        }
+
+      </p>
+
+    </div>
+
+  </div>
+
+</Card>
+
+{/* ERROR CHARTS */}
+<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+  <Card title="📉 Error Metrics Comparison">
+
+    <ErrorComparisonChart
+      result={
+        selectedProgramData
+      }
+    />
+
+  </Card>
+
+  {/* SMART INSIGHT */}
+  <Card title="🧠 Smart Insight">
+
+    <div className="bg-blue-50 rounded-2xl p-6 h-full">
+
+      <pre className="whitespace-pre-wrap text-gray-700 leading-7 font-sans">
+
+        {smartInsight}
+
+      </pre>
+
+    </div>
+
+  </Card>
+
+</div>
+
+{/* OVERALL ERROR */}
+<Card title="📊 Overall Error Metrics">
+
+  <OverallErrorMetricsChart
+    results={forecastResults}
+  />
+
+</Card>
+
+{/* FOOTER */}
+<Footer />
 
       </div>
 
